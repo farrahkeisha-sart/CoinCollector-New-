@@ -1,52 +1,53 @@
-        using UnityEngine; 
-        using UnityEngine.InputSystem;   // WAJIB untuk Input System 
-        using TMPro;
-        
-        public class PlayerMovement : MonoBehaviour 
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+public class PlayerMovement : MonoBehaviour
+{
+    public float kecepatan = 5f;
+    private Vector2 arahGerak;
+    private Rigidbody2D rb;
+
+    InputAction moveAction;
+
+    void Start()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        moveAction = InputSystem.actions.FindAction("Move");
+    }
+
+    void Update()
+    {
+        Move();
+    }
+
+    void Move()
+    {
+        if (moveAction != null)
         {
-            public float kecepatan = 5f; 
-            public int skor = 0;
-
-            public GameManager gameManager;
-            public TextMeshProUGUI text;
-
-            
-            [Header("Input Setup")]
-            public InputActionReference moveAction;
-            private Vector2 arahGerak;   
-            // nilai dari action "Move" 
-        
-            // Dipanggil OTOMATIS oleh komponen Player Input 
-            // saat action "Move" pada asset InputSystem_Actions aktif. 
-            void OnMove(InputValue value)
-            // Nama method WAJIB: On + nama action  ->  OnMove     void OnMove(InputValue value) 
-            { 
-                // TODO: ambil nilai Vector2 dari input, simpan ke arahGerak         
-                arahGerak = moveAction.action.ReadValue<Vector2>();    
-            } 
-        
-            void Update() 
-            { 
-                // TODO: gerakkan objek memakai arahGerak. 
-                // Ingat kalikan kecepatan DAN Time.deltaTime! 
-                Vector3 arah = new Vector3(arahGerak.x, arahGerak.y, 0);        
-                transform.position += arah * kecepatan * Time.deltaTime;
-            } 
-
-            // Dipanggil otomatis saat Player menyentuh objek ber-Trigger 
-            void OnTriggerEnter2D(Collider2D other) 
-            { 
-                // TODO: cek apakah yang disentuh punya tag "Coin"    
-                if ( other.CompareTag("Coin")) 
-                { 
-                    // TODO: hancurkan koin yang tersentuh 
-                    Destroy(other.gameObject);
-                    skor += 1;
-                    Debug.Log("Skor anda : " + skor); 
-                    text.text = skor + ""; 
-                    gameManager.AmbilKoin();
-                } 
-            } 
-
+            Vector2 moveValue = moveAction.ReadValue<Vector2>();
+            arahGerak = moveValue.normalized;
+            rb.linearVelocity = arahGerak * kecepatan;
         }
+    }
 
+    void RotateToDirection()
+    {
+        if (arahGerak.sqrMagnitude > 0.01f)
+        {
+            transform.right = arahGerak;
+        }
+    }
+
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag("Coin"))
+        {
+            GameManager gameManager = FindAnyObjectByType<GameManager>();
+            if (gameManager != null)
+            {
+                gameManager.AmbilKoin();
+            }
+            Destroy(other.gameObject);
+        }
+    }
+}
